@@ -129,7 +129,7 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
    beta = .C("iterate",beta,p,nbatches, ni, startInd_Batch, as.numeric(YXsum), as.numeric(XsqSumRidge), betaX_datavec, invCXvec, bXXjSum, as.numeric(lambda), as.numeric(alpha), as.numeric(toler), as.integer(maxit),PACKAGE="lme1en")[[1]]
   })[3]
   if(verbose) print(paste0("Time=",time))
-	return(beta)#foo$est) #return optimized beta
+	return(beta)
 } #end function
 
 
