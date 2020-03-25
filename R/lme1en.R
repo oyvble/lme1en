@@ -7,8 +7,8 @@
 #' @param y response vector. Should be standardized before input (use scale). 
 #' @param X Design matrix belonging to fixed effects coefficients (beta). Should be standardized before input (use scale).
 #' @param batch factor with batch effect names (vector for each observations)
-#' @param rho #proportion of variation explained by batch effect
-#' @param lambda numeric, penalty levels for fixed effects betas (component 1) 
+#' @param rho proportion of variation explained by batch effect
+#' @param lambda numeric, penalty levels for fixed effects betas
 #' @param alpha numeric, penalty levels for fixed effects betas (balancing LASSO/RIDGE erros) 
 #' @param beta numeric, initial values of the beta coefficients (using glmnet or marginal estimates if not provided)  
 #' @param glmnetPenalty boolean, whether to use the original peanalty (FALSE) or the glmnet penalty (TRUE)
@@ -23,19 +23,20 @@
 #' dat = genData(seed=1)
 #' bhat = lme1en(y=dat$y,X=dat$X,batch=dat$batch, rho=0.3,lambda=0.1,alpha=0.5,verbose=TRUE)
 #' }
-lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-5 ,verbose=FALSE) {
+lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-3 ,verbose=FALSE) {
   #NB; BE SURE TO CENTRALIZE y and X data (no intercept returned)
   #PREPARE VARIABLES TO BE USED IN THE C++ IMPLEMENTATION
 #  beta=NULL;glmnetPenalty=TRUE;glmnetWarmup=TRUE; maxit = 1000;toler = 1e-5;verbose=FALSE
+# y=dat$y;X=dat$X;batch=dat$batch
   
   #CHECK DATA INPUT:
-  if(rho<0 || rho>1) stop("rho was not within [0,1]")
-  if(alpha<0 || alpha>1) stop("alpha was not within [0,1]")
-  if(lambda<0 ) stop("lambda cannot be less than zero")
+  if(any(rho<0) || any(rho>1)) stop("rho was not within [0,1]")
+  if(any(alpha<0) || any(alpha>1)) stop("alpha was not within [0,1]")
+  if(any(lambda<0) ) stop("lambda cannot be less than zero")
   if(maxit<0 ) stop("maxit cannot be less than zero")
-  if(length(lambda)>1 || length(alpha)>1 || length(rho)>1) {
-    if(verbose) print("lambda/alpha/rho cannot be vectors. First elements will be used..")
-  }
+
+  if(length(rho)>1 || length(alpha)>1 || length(lambda)>1) if(verbose) print("rho/alpha/lambda cannot be a vectors. Only first element will be used..")
+
   lambda = as.numeric(lambda)[1]
   alpha = as.numeric(alpha)[1]
   rho = as.numeric(rho)[1]
@@ -107,6 +108,7 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
     
     indvec2 = startInd_Batch[i]*p + 1:(ni[i]*p) #get data indices to use at batch i
     invCXvec[indvec2] = c(X2) #insert in vectorized over batches
+  	if(verbose) print(paste0("Done preprosessing with ",i,"/",nbatches," batches"))
   }    
   rm(X,X2,Y2,betaX_data)
   
@@ -122,7 +124,7 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
   #invCXvec A vectorized list with nbatches batch list-elements each containing 'ni x p' large matriced ('n x p' in total size) 
   
  # sourceCpp("iterate.cpp")
-  if(verbose) print("Running C code...")
+  if(verbose) print("Running C code. This may take a while for very large p....")
   time = system.time({
    beta = .C("iterate",beta,p,nbatches, ni, startInd_Batch, as.numeric(YXsum), as.numeric(XsqSumRidge), betaX_datavec, invCXvec, bXXjSum, as.numeric(lambda), as.numeric(alpha), as.numeric(toler), as.integer(maxit),PACKAGE="lme1en")[[1]]
   })[3]
