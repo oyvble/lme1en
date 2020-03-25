@@ -35,8 +35,9 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
   if(any(lambda<0) ) stop("lambda cannot be less than zero")
   if(maxit<0 ) stop("maxit cannot be less than zero")
 
-  if(length(rho)>1 || length(alpha)>1 || length(lambda)>1) if(verbose) print("rho/alpha/lambda cannot be a vectors. Only first element will be used..")
-
+  if(length(rho)>1 || length(alpha)>1 || length(lambda)>1) {
+    if(verbose) print("rho/alpha/lambda cannot be a vectors. Only first element will be used..")
+  }
   lambda = as.numeric(lambda)[1]
   alpha = as.numeric(alpha)[1]
   rho = as.numeric(rho)[1]
@@ -123,7 +124,6 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
   #betaX_datavec A vectorized list with nbatches batch list-elements each containing ni long vectors (n in total length)
   #invCXvec A vectorized list with nbatches batch list-elements each containing 'ni x p' large matriced ('n x p' in total size) 
   
- # sourceCpp("iterate.cpp")
   if(verbose) print("Running C code. This may take a while for very large p....")
   time = system.time({
    beta = .C("iterate",beta,p,nbatches, ni, startInd_Batch, as.numeric(YXsum), as.numeric(XsqSumRidge), betaX_datavec, invCXvec, bXXjSum, as.numeric(lambda), as.numeric(alpha), as.numeric(toler), as.integer(maxit),PACKAGE="lme1en")[[1]]
