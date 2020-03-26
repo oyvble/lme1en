@@ -26,8 +26,11 @@
 lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-3 ,verbose=FALSE) {
   #NB; BE SURE TO CENTRALIZE y and X data (no intercept returned)
   #PREPARE VARIABLES TO BE USED IN THE C++ IMPLEMENTATION
-#  beta=NULL;glmnetPenalty=TRUE;glmnetWarmup=TRUE; maxit = 1000;toler = 1e-5;verbose=FALSE
-# y=dat$y;X=dat$X;batch=dat$batch
+#library(lme1en)
+# dat = genData(ntot = 20, nsites = 10, nbatches = 3, propAgeAs=0.8, sd_batch = 0.5, sd_signal = 0.1, sd_bparam = 0.03 , ageRange = c(10,35), seed=1)
+# y=dat$y;X=dat$X;batch=dat$batch;rho=0.3;lambda=1; alpha=0.5;beta=NULL;glmnetPenalty=TRUE;glmnetWarmup=TRUE; maxit = 1000;toler = 1e-3;verbose=TRUE
+# lambda=1, alpha=0.5,  rho=0.3, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000
+  #bhat1 = lme1en(y=dat$y,X=dat$X,batch=dat$batch, lambda=1, alpha=0.5,  rho=0.3, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-3 ,verbose=FALSE)
   
   #CHECK DATA INPUT:
   if(any(rho<0) || any(rho>1)) stop("rho was not within [0,1]")
@@ -67,6 +70,9 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
     if(p!=length(beta)) stop("The provided initital coefficients did not have correct length!")
   }
   
+  #converting X to Matrix type if "matrix"  (this speeds up crossproduct )
+  if(class(X)=="matrix") X = Matrix::Matrix(X) #quite fast to do
+
   #lambda rescaled with n to avoid using mean instead of sum
   lambda = lambda*ntot  
   
@@ -74,33 +80,39 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
   #Prepare variable to be used in calculations:
   YXsum <- rep(0,p) #suff.stat of cross prod of response and covars (vector)
   XsqSumRidge <- rep(0,p) # suff.stat of covar (vector), sum([X,-j]*Xj) and Sum(Xj^2) (cross prod and squared variant)
-  invCXlist <- list() #store transformed X matrix (used for dynamic update)
   bXXjSum = 0 #calculate #cross prod of beta-j,X-j,Xj (betaX_datavec = beta-j%*%X-j already)
 
-  #  betaXcrossjSum <- rep(0,p) #dynamic constant changing with j iterations: a vector before multiplying with beta
   startInd_Batch = as.integer(c(0,cumsum(ni))) #get start index for vectorized batch vector
   betaX_datavec = rep(NA,ntot) #used to store data vector for each batch (since n<<p)
   invCXvec = rep(NA,ntot*p) #very long vector: n x p (vectorized)
+  #following could be implemented in C code:
+  #  betaXcrossjSum <- rep(0,p) #dynamic constant changing with j iterations: a vector before multiplying with beta
   for (i in 1:nbatches) { #run over all batches
     bat = batches[i] #get batch name
-    COVAR = matrix(rho,ncol=ni[i],nrow=ni[i]) #Obtain covariance matrix: insert proportion rho in (0,1)
-    diag(COVAR) = 1 
-    C <- t(chol(COVAR))  #obtain Cholesky decomposition (must be pos.def) [lower triangular]
-    invC = solve(C) #can be done alternative?
-    
+    if(ni[i]==0) next #skip if no data in batch (this is fine since all is vectorized)
+    COVAR =matrix(rho,ncol=ni[i],nrow=ni[i]) #Obtain correlation matrix: insert proportion rho in (0,1)
+    diag(COVAR) = 1 #total variance is factorized out
+    invC = Matrix::Matrix(solve(t(chol(COVAR)))) #Convert to matrix type after inverting cholesky matrix (recognize as lower triangular)
+
     #Multiply cholesky matrix with ind. bsed
     ind = which(bat==batch) #get index of inds in batch
-    X2 = invC%*%X[ind,] #transform covars (ni x p) in dimension
-    Y2 = invC%*%y[ind] #transform response
-
-    #prepare suff stats (summing up)    
-    YXsum <- YXsum + crossprod(X2,Y2) #crossprod X,y
     
+    #linear transform covars (ni x p) in dimension (VERY SLOW FOR LARGE p)
+    X2 = invC%*%X[ind,] #Note: %*% is faster than crossprod and fastest using Matrix
+    y2 = invC%*%y[ind] #linear transform response FAST
+
+    ################################
+    #prepare suff vars (summing up)#  
+    ################################
+    
+    #TIME CONSUMING FOR LARGE p
+    YXsum <- YXsum + Matrix::t(y2)%*%X2 #crossprod X,y (1 x p)
+
     #Update covar: 
-    XsqSumRidge <- XsqSumRidge + colSums(X2^2) #sum up vector
+    XsqSumRidge <- XsqSumRidge + Matrix::colSums(X2^2) #sum up vector
     
     #store data vector for each batch, to be multiplied by X,j later (note init beta, and index=1 not used  )
-    betaX_data = tcrossprod(beta[-1],X2[,-1])  #j=1
+    betaX_data = Matrix::t(X2[,-1]%*%beta[-1])  #j=1 (ni x (p-1))
     bXXjSum = bXXjSum + sum(betaX_data*X2[,1]) #calculate constant sum 'on-the-fly' (j=1)
     
     #store long vectorized matrices:
@@ -108,11 +120,13 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
     betaX_datavec[indvec1] = betaX_data #insert in vectorized over batches
     
     indvec2 = startInd_Batch[i]*p + 1:(ni[i]*p) #get data indices to use at batch i
-    invCXvec[indvec2] = c(X2) #insert in vectorized over batches
+    invCXvec[indvec2] = as.numeric(X2) #insert in vectorized over batches
   	if(verbose) print(paste0("Done preprosessing with ",i,"/",nbatches," batches"))
   }    
-  rm(X,X2,Y2,betaX_data)
-  
+ # rm(X,y,X2,y2,betaX_data);gc()
+# invCXvec2=invCXvec;betaX_datavec2=betaX_datavec;bXXjSum2=bXXjSum;XsqSumRidge2=XsqSumRidge;YXsum2=YXsum
+#  max(abs(invCXvec2-invCXvec));max(abs(betaX_datavec2-betaX_datavec2));max(abs(bXXjSum2-bXXjSum));max(abs(XsqSumRidge2-XsqSumRidge));max(abs(t(YXsum2)-YXsum))
+
   if(glmnetPenalty) {
     XsqSumRidge <- XsqSumRidge + lambda*(1-alpha) #whether to use glmnet penalty (divide Ridge penalty by 2)
   } else {

@@ -7,6 +7,10 @@ Author: Oyvind Bleka
 Maintainer: Oyvind Bleka <oyvble@hotmail.com>
 Description: A elastic net model with random intercept for batch information is fitted using the coordinate decent algorithm (exact solutions).
 License: GPL(>=2)
-Depends: foreach
-Suggests: doParallel,  glmnet, parallel
+Depends: foreach, Matrix
+Suggests: 
+    doParallel,
+    glmnet,
+    parallel,
+    testthat (>= 2.1.0)
 RoxygenNote: 7.1.0

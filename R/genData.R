@@ -1,6 +1,6 @@
 #' @title genData
-#' @description Generating a example dataset 
-#' @details The function generates a dataset based on beta distribution where age (uniformly distributed) is a underlying explanatory variable
+#' @description Generating a example dataset (age estimation)
+#' @details The function generates a dataset based on normal distribution where age (uniformly distributed) is a underlying explanatory variable
 #' 
 #' @param ntot total number of observations
 #' @param nsites number of sites
@@ -19,7 +19,7 @@
 #' dat = genData(seed=1)
 #' }
 #ntot = 1000;nsites = 1000;nbatches = 5;propAgeAs=0.05;sd_batch = 0.5;sd_signal = 0.1;sd_bparam = 0.03;ageRange = c(10,35);seed=NULL;verbose=TRUE
-genData = function(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs=0.05, sd_batch = 0.5, sd_signal = 0.1, sd_bparam = 0.03 , ageRange = c(10,35), seed=NULL,verbose=TRUE) {
+genData = function(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs=0.05, sd_batch = 0.5, sd_signal = 0.1, sd_bparam = 0.03 , ageRange = c(10,35), seed=NULL,verbose=FALSE) {
   if(!is.null(seed)) set.seed(seed) #set seed if provided
 
    #GENERATE AGES
@@ -36,21 +36,25 @@ genData = function(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs=0.05, sd_
   bj = rnorm(nAgeAs,0,sd_bparam) #simulate effect on age #site specific
   
   #Generate noise (all sites and observations)
-  epsij = matrix(rnorm(ntot*nsites,0,sd_signal ),nrow=ntot,ncol=nsites) #random noise per individal per marker
+  if(verbose) print("Generating noise...")
+  epsij = Matrix::Matrix(rnorm(ntot*nsites,0,sd_signal ),nrow=ntot,ncol=nsites) #random noise per individal per marker
 
   #generate data on each site (X covariate)
+  if(verbose) print("Including batch effect...")
   X = batchRE[batchInd] + epsij #include batch effect and noise (include batch effect on all sites)
   
   #include age effects on selected sites 
-  for(j in AgeAsind) {
-    X[,j] = X[,j] + bj[j==AgeAsind]*(agei-ageMid) #add age effect
-  }
+  if(verbose) print("Including age effect...")
+  tmp = t(bj%*%t(agei-ageMid))
+  X[,AgeAsind] = X[,AgeAsind] + tmp
+#  for(j in AgeAsind)  X[,j] = X[,j] + bj[j==AgeAsind]*(agei-ageMid) #add age effect (SLOW FOR LARGE nAgeAs)
   colnames(X) = paste0("Site ",1:nsites)
   rownames(X) = paste0("ID",1:ntot) 
   
 # max(abs(X[,AgeAsind[1]] - (bj[1]*(agei-ageMid) + batchRE[batchInd] +epsij[,AgeAsind[1]])))
 
   #SCALE AND STORE DATA:
+  if(verbose) print("Standardizing data...")
   X = scale(X,center=TRUE,scale=TRUE) #normalize coeffs
   agei = scale(agei,center=TRUE,scale=TRUE) #scale age
 

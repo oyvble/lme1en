@@ -6,7 +6,7 @@
 \usage{
 genData(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs = 0.05,
   sd_batch = 0.5, sd_signal = 0.1, sd_bparam = 0.03,
-  ageRange = c(10, 35), seed = NULL, verbose = TRUE)
+  ageRange = c(10, 35), seed = NULL, verbose = FALSE)
 }
 \arguments{
 \item{ntot}{total number of observations}
@@ -33,10 +33,10 @@ genData(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs = 0.05,
 A list with variables y (response), X (design matrix belonging to fixed effects coefficients), batch (factor with batch effect names), age (true ages)
 }
 \description{
-Generating a example dataset
+Generating a example dataset (age estimation)
 }
 \details{
-The function generates a dataset based on beta distribution where age (uniformly distributed) is a underlying explanatory variable
+The function generates a dataset based on normal distribution where age (uniformly distributed) is a underlying explanatory variable
 }
 \examples{
 \dontrun{ 

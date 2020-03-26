@@ -6,7 +6,7 @@
 \usage{
 lme1en(y, X, batch, lambda = 1, alpha = 0.5, rho = 0, beta = NULL,
   glmnetPenalty = TRUE, glmnetWarmup = TRUE, maxit = 10000,
-  toler = 1e-05, verbose = FALSE)
+  toler = 0.001, verbose = FALSE)
 }
 \arguments{
 \item{y}{response vector. Should be standardized before input (use scale).}
@@ -15,11 +15,11 @@ lme1en(y, X, batch, lambda = 1, alpha = 0.5, rho = 0, beta = NULL,
 
 \item{batch}{factor with batch effect names (vector for each observations)}
 
-\item{lambda}{numeric, penalty levels for fixed effects betas (component 1)}
+\item{lambda}{numeric, penalty levels for fixed effects betas}
 
 \item{alpha}{numeric, penalty levels for fixed effects betas (balancing LASSO/RIDGE erros)}
 
-\item{rho}{#proportion of variation explained by batch effect}
+\item{rho}{proportion of variation explained by batch effect}
 
 \item{beta}{numeric, initial values of the beta coefficients (using glmnet or marginal estimates if not provided)}
 

@@ -2,6 +2,7 @@
   importFrom("graphics", "abline", "axis", "legend", "plot", "points")
   importFrom("stats", "coef", "median", "qt", "rnorm", "runif")
 import(foreach)
+import(Matrix)
 export(cv.lme1en)
 export(genData)
 export(lme1en)
