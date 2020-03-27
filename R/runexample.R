@@ -16,7 +16,7 @@
 #' @export
 #' @examples
 #' \dontrun{ 
-#'  runexample(ntot=500,nsites=1000,nbatches=20,verbose=TRUE,seed=1, sd_batch = 1, sd_signal = 1, sd_bparam = 0.1)
+#'  runexample(seed=1)
 #' }
 
 runexample = function(TestTrainProp=0.6, ntot = 500, nsites = 1000, nbatches = 20, propAgeAs=0.05, sd_batch = 1, sd_signal = 1, sd_bparam = 0.1 , ageRange = c(10,35), seed=NULL,verbose=TRUE) {

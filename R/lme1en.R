@@ -25,12 +25,6 @@
 #' }
 lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-3 ,verbose=FALSE) {
   #NB; BE SURE TO CENTRALIZE y and X data (no intercept returned)
-  #PREPARE VARIABLES TO BE USED IN THE C++ IMPLEMENTATION
-#library(lme1en)
-# dat = genData(ntot = 20, nsites = 10, nbatches = 3, propAgeAs=0.8, sd_batch = 0.5, sd_signal = 0.1, sd_bparam = 0.03 , ageRange = c(10,35), seed=1)
-# y=dat$y;X=dat$X;batch=dat$batch;rho=0.3;lambda=1; alpha=0.5;beta=NULL;glmnetPenalty=TRUE;glmnetWarmup=TRUE; maxit = 1000;toler = 1e-3;verbose=TRUE
-# lambda=1, alpha=0.5,  rho=0.3, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000
-  #bhat1 = lme1en(y=dat$y,X=dat$X,batch=dat$batch, lambda=1, alpha=0.5,  rho=0.3, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-3 ,verbose=FALSE)
   
   #CHECK DATA INPUT:
   if(any(rho<0) || any(rho>1)) stop("rho was not within [0,1]")
@@ -142,7 +136,7 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
   time = system.time({
    beta = .C("iterate",beta,p,nbatches, ni, startInd_Batch, as.numeric(YXsum), as.numeric(XsqSumRidge), betaX_datavec, invCXvec, bXXjSum, as.numeric(lambda), as.numeric(alpha), as.numeric(toler), as.integer(maxit),PACKAGE="lme1en")[[1]]
   })[3]
-  if(verbose) print(paste0("Time=",time))
+  if(verbose) print(paste0("Time=",round(time,2),"s"))
 	return(beta)
 } #end function
 

@@ -57,6 +57,6 @@ The function assume that the response y and design matrix X are centralized (no 
 \examples{
 \dontrun{ 
 dat = genData(seed=1)
-CVerrors = cv.lme1en(y=dat$y,X=dat$X,batch=dat$batch, rho=0.3,lambda=0.1,alpha=0.5,verbose=TRUE,seed=1)
+CVerrors = cv.lme1en(y=dat$y,X=dat$X,batch=dat$batch, rho=0.3,verbose=TRUE,seed=1)
 }
 }

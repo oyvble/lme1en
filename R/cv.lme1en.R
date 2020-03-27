@@ -24,9 +24,8 @@
 #' @examples
 #' \dontrun{ 
 #' dat = genData(seed=1)
-#' CVerrors = cv.lme1en(y=dat$y,X=dat$X,batch=dat$batch, rho=0.3,lambda=0.1,alpha=0.5,verbose=TRUE,seed=1)
+#' CVerrors = cv.lme1en(y=dat$y,X=dat$X,batch=dat$batch, rho=0.3,verbose=TRUE,seed=1)
 #' }
-#errorFun = NULL;Kfold=10;CViter=10;parallel=TRUE
 cv.lme1en = function(y,X,batch, rho=0, lambda=1, alpha=0.5, beta=NULL, glmnetPenalty=TRUE,glmnetWarmup=TRUE, maxit = 10000, toler = 1e-5 ,verbose=FALSE, errorFun = NULL, Kfold=10, CViter=10, parallel=TRUE,seed=NULL) {
   if(!is.null(seed)) set.seed(seed) #set seed if provided
   set.seed(seed) #MUST BE SAME FOR EACH M

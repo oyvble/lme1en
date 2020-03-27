@@ -1,11 +1,11 @@
 Package: lme1en
 Type: Package
-Title: Elastic Net with random batch effects (p very large)
+Title: Elastic Net With Random Intercept
 Version: 0.1
 Date: 2020-03-24
 Author: Oyvind Bleka
 Maintainer: Oyvind Bleka <oyvble@hotmail.com>
-Description: A elastic net model with random intercept for batch information is fitted using the coordinate decent algorithm (exact solutions).
+Description: A elastic net model with random intercept is fitted using the coordinate decent algorithm (exact solutions).
 License: GPL(>=2)
 Depends: foreach, Matrix
 Suggests: 

@@ -40,6 +40,6 @@ The function do following steps: 1) simulate dataset 2) Split data into train/te
 }
 \examples{
 \dontrun{ 
- runexample(ntot=500,nsites=1000,nbatches=20,verbose=TRUE,seed=1, sd_batch = 1, sd_signal = 1, sd_bparam = 0.1)
+ runexample(seed=1)
 }
 }

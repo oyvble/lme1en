@@ -18,7 +18,6 @@
 #' \dontrun{ 
 #' dat = genData(seed=1)
 #' }
-#ntot = 1000;nsites = 1000;nbatches = 5;propAgeAs=0.05;sd_batch = 0.5;sd_signal = 0.1;sd_bparam = 0.03;ageRange = c(10,35);seed=NULL;verbose=TRUE
 genData = function(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs=0.05, sd_batch = 0.5, sd_signal = 0.1, sd_bparam = 0.03 , ageRange = c(10,35), seed=NULL,verbose=FALSE) {
   if(!is.null(seed)) set.seed(seed) #set seed if provided
 
@@ -55,9 +54,16 @@ genData = function(ntot = 1000, nsites = 1000, nbatches = 5, propAgeAs=0.05, sd_
 
   #SCALE AND STORE DATA:
   if(verbose) print("Standardizing data...")
-  X = scale(X,center=TRUE,scale=TRUE) #normalize coeffs
+  #X2 = scale(X,center=TRUE,scale=TRUE) #normalize coeffs
+  
+  mean = Matrix::colMeans(X)
+  sumsq = Matrix::colSums(X^2) 
+  sd = sqrt((sumsq - ntot*mean^2)/(ntot-1)) #get scaling
+  X = Matrix::t( (Matrix::t(X)-mean)/sd ) #transpose back
+  attr(X, "scaled:center") <- mean
+  attr(X, "scaled:scale") <- sd
+  
   agei = scale(agei,center=TRUE,scale=TRUE) #scale age
-
   coefAgeAs = bj #extract age related coeffs
   names(coefAgeAs) = paste0("Site ",AgeAsind)
   
