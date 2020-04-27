@@ -56,7 +56,8 @@ lme1en = function(y,X,batch, lambda=1, alpha=0.5,  rho=0, beta=NULL, glmnetPenal
     if(glmnetWarmup) { #if glmnet installed
       if(verbose) print("Fitting glm-model for init start values of beta")
       fit = glmnet::glmnet(x = X,y = y, alpha=alpha, lambda=lambda, family="gaussian",standardize=FALSE,intercept = FALSE)
-      beta = coef(fit)[-1] #obtain init betas (remove intercept which is zero)
+      beta = coef(fit)[-1] #obtain init betas (remove intercept which is zero)	  
+	  if(rho==0 && glmnetPenalty) return(beta) #return glmnet estimates if rho=0 and using glmnetPenalty
     } else { #if glmnet not installed (get marginal beta estimates as warmups)
       beta = c(y%*%X)/colSums(X^2) #use marginal beta estimates (without rho correction)
     }
